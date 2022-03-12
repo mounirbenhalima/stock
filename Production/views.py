@@ -1088,7 +1088,7 @@ class ConsultingFinishedProductListView(ListView):
         total_amount = 0
         for p in qs:
             if p.state =="FINISHED" :
-                total_weight += p.quantity_produced * p.product.weight * p.product.roll_package / 1000
+                total_weight += p.ideal_weight
             real_total_weight += p.weight
             total_packages += p.quantity_produced
             total_amount += float(p.quantity_produced) * float(p.product.roll_package) * float(p.product.price)
@@ -2803,7 +2803,6 @@ def print_ticket(request, slug):
     coil = get_object_or_404(Coil, slug=slug)
     coil.ticket_printed = True
     coil.save()
-    template = loader.get_template('production/coil_ticket.html')
     try:
         company = Company.objects.filter(name='Ln Plast')[0]
     except:
@@ -2814,18 +2813,7 @@ def print_ticket(request, slug):
         "coil": coil,
 
     }
-    html = template.render(context)
-    pdf = render_to_pdf('production/coil_ticket.html', context)
-    if pdf:
-        response = HttpResponse(pdf, content_type='application/pdf')
-        filename = "%s.pdf" % (coil.product_designation)
-        content = "inline; filename='%s'" % (filename)
-        download = request.GET.get("download")
-        if download:
-            content = "attachment; filename='%s'" % (filename)
-        response['Content-Disposition'] = content
-        return response
-    return HttpResponse("Not found")
+    return render(request, 'production/coil_tick.html', context=context)
 
 def print_issue_ticket(request, slug):
     coil = get_object_or_404(Coil, slug=slug)
@@ -3079,20 +3067,10 @@ class MixingListView(ListView):
 
     def get_queryset(self, **kwargs):
         now = timezone.now()
-        now_less = now.replace(day = 1)
-        if now.month == 1 or now.month == 3 or now.month == 5 or now.month == 7 or now.month == 8 or now.month == 10 or now.month == 12:
-            now_more = now.replace(day = 31)
-        elif now.month == 4 or now.month == 6 or now.month == 9 or now.month == 11:
-            now_more = now.replace(day = 30)
-        elif now.month == 2:
-            if now.year % 4 == 0:
-                now_more = now.replace(day = 29)
-            else:
-                now_more = now.replace(day = 28)
+        now = now.replace(hour=0, minute=0, second=0)
 
-        queryset = Order.objects.exclude(machine = None).filter(user=self.request.user)
-        queryset = queryset.filter(ordered_date__lte = now_more )
-        queryset = queryset.filter(ordered_date__gte = now_less )
+        queryset = Order.objects.exclude(machine = None).all()
+        queryset = queryset.filter(ordered_date__gte = now )
         return queryset
 
 class MyHolidaysListView(ListView):
@@ -3418,6 +3396,29 @@ class ShapingCreateView(View):
                 product4 = request.POST.get('_ref4')
                 product5 = request.POST.get('_ref5')
                 product6 = request.POST.get('_ref6')
+
+                if product != "":
+                   if product == product2 or product == product3 or product == product4 or product == product5 or product == product6:
+                       messages.error(request, "Veuillez Entrer la Référence une Seule Fois !")
+                       return redirect(request.META.get('HTTP_REFERER'))
+                if product2 != "":
+                   if product2 == product3 or product2 == product4 or product2 == product5 or product2 == product6:
+                       messages.error(request, "Veuillez Entrer la Référence une Seule Fois !")
+                       return redirect(request.META.get('HTTP_REFERER'))
+                 
+                if product3 != "":
+                   if product3 == product4 or product3 == product5 or product3 == product6:
+                       messages.error(request, "Veuillez Entrer la Référence une Seule Fois !")
+                       return redirect(request.META.get('HTTP_REFERER'))
+
+                if product4 != "":
+                   if product4 == product5 or product4 == product6:
+                       messages.error(request, "Veuillez Entrer la Référence une Seule Fois !")
+                       return redirect(request.META.get('HTTP_REFERER'))
+                if product5 !="":
+                   if product5 == product6:
+                     messages.error(request, "Veuillez Entrer la Référence une Seule Fois !")
+                     return redirect(request.META.get('HTTP_REFERER'))
                 user = form.user
                 try:
                     coil = Coil.objects.exclude(status ="TO_BE_DESTROYED").exclude(status ="CONSUMED").exclude(status ="SOLD").exclude(status ="CUT").exclude(status ="PENDING_EXTRUSION").exclude(status ="PENDING_PRINTING").exclude(status ="PENDING_SHAPING").get(ref__icontains=product)
@@ -3527,6 +3528,10 @@ class ShapingCreateView(View):
                     coil6.save()
                     mchn.save()
                     shaping.save()
+                
+                if coil is None and coil2 is None and coil3 is None and coil4 is None and coil5 is None and coil6 is None:
+                    messages.error(request, "Aucune Bobine Trouvée !")
+                    return redirect(request.META.get('HTTP_REFERER'))
                 return redirect(self.success_url)
 
 class HandleConsumptionView(View):

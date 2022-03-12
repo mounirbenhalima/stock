@@ -64,6 +64,7 @@
           <th style="width:10%">Date</th>
           <th style="width:10%">Utilisateur</th>
           <th style="width:20%">Production</th>
+          <th style="width:20%">Produit</th>
           <th style="width:15%">Ecart</th>
           <th style="width:10%">Type Ecart</th>
         </tr>
@@ -74,6 +75,7 @@
             <td>{{correction.date }}</td>
             <td>{{correction.user.first_name}} {{trashout.user.last_name}} </td>
             <td>{{correction.production.ref_code}}</td>
+            <td>{{correction.production.product}}</td>
             <td>{{correction.difference}}</td>
             <td>{{correction.get_type_difference_display}}</td>
         </tr>

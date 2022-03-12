@@ -647,9 +647,8 @@ class FinishedProductType(Product):
         total = 0
         amount = 0
         for p in productions:
-            if p.weight is not None:
-                total += p.weight
-        amount = total * Decimal(self.price)
+            total += p.quantity_produced
+        amount = total * Decimal(self.price) * Decimal(self.roll_package)
         return amount
     
     def user_quantity_produced(self, start_date, end_date, user):

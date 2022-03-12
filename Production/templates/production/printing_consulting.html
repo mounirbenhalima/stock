@@ -67,7 +67,6 @@
           <th style="width:10%">Date</th>
           <th style="width:10%">Utilisateur</th>
           <th style="width:10%">Référence</th>
-          <th style="width:10%">Bobine</th>
           <th style="width:10%">Imprimeuse</th>
           <th style="width:10%">Etat</th>
         </tr>
@@ -77,8 +76,8 @@
         <tr>
             <td>{{ production.date }}</td>
             <td>{{production.user.first_name}} {{production.user.last_name}}</td>
-            {% comment %} <td><a href = "{% url 'stock-manager:invoice' production.slug %}" target ="_blank">{{production.slug}}</a></td> {% endcomment %}
-            {% if request.user.profile.job_position.name == "Administrateur" %} <a href="{% url 'production:update-production' production.slug %}"> {{production.ref_code}} </a> {% else %} {{production.ref_code}} {% endif %}</td>
+
+            
             <td>{{production.coil.product_designation}}</td>
             <td>{{production.machine}}</td>
             <td>{{production.get_state_display}}</td>
