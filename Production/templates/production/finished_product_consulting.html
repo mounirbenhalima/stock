@@ -84,6 +84,7 @@
           <th style="width:10%">Poids Physique</th>
           <th style="width:10%">Poids Idéal</th>
           <th style="width:10%">Différence</th>
+          <th style="width:10%">Valeur</th>
           <th style="width:10%">Etat</th>
         </tr>
       </thead>
@@ -100,6 +101,7 @@
             <td>{{production.weight}}</td>
             <td>{{production.ideal_weight}}</td>
             <td>{% if production.calculated_weight_difference > 0 %} <p style = "color:green;">{{ production.calculated_weight_difference }}</p> {% else %}<p style = "color:red;">{{ production.calculated_weight_difference }}</p> {% endif %} </td>
+            <td>{{production.value|floatformat:2}} DA</td>
             <td>{{production.get_state_display}}</td>
         </tr>
         {% empty %}

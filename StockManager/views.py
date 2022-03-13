@@ -413,6 +413,7 @@ def final_product_entry(request):
             production.state = "FINISHED"
             production.weight = weight - (Decimal(production.product.package.weight)*(Decimal(quantity)/1000))
             production.ideal_weight = (production.quantity_produced * production.product.weight * production.product.roll_package )/1000
+            production.value = Decimal(production.quantity_produced) * Decimal(production.product.roll_package) * Decimal(production.product.price)
             production.save()
             product = production.product
             difference = quantity - production.quantity_produced
@@ -1399,6 +1400,10 @@ def validate_order(request):
                         messages.error(request, error_message)
                         return redirect(reverse_lazy('stock-manager:order-summary'))
             order.ordered = True
+            value = 0
+            for i in order.items.all():
+                value += Decimal(i.item.price) * Decimal(i.quantity)
+            order.value = value
             order.save()
             if order.user.profile.job_position.name == 'Mélangeur':
                 return redirect(reverse_lazy("production:index-mixing"))

@@ -1091,7 +1091,7 @@ class ConsultingFinishedProductListView(ListView):
                 total_weight += p.ideal_weight
             real_total_weight += p.weight
             total_packages += p.quantity_produced
-            total_amount += float(p.quantity_produced) * float(p.product.roll_package) * float(p.product.price)
+            total_amount += p.value
 
         context = {
             'object_list': qs,

@@ -184,6 +184,7 @@ class Order(models.Model):
     category = models.CharField('Catégorie', max_length=255, null = True, blank= True)
     external_stock = models.BooleanField(default=False)
     machine = models.ForeignKey("Machine.Machine", on_delete=models.SET_NULL,blank=True, null=True, default=None)
+    value = models.DecimalField(default =0, null=True, decimal_places=2 , max_digits=8 , blank=True)
 
     def __str__(self):
         return f'{self.ref_code}'

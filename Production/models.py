@@ -44,6 +44,7 @@ class Production(models.Model):
     rectified = models.BooleanField("Rectifié", default=False, blank=True, null = True)
     the_print = models.CharField("Impression", max_length=250,
                             choices=PRINT_CHOICES, null=True, blank=True)
+    value = models.DecimalField(default =0, null=True, decimal_places=2 , max_digits=8 , blank=True)
 
     def get_absolute_url(self):
         return reverse("production:", kwargs={"slug": self.slug})
