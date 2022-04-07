@@ -173,7 +173,91 @@
             {% endfor %}
           </tbody>
         </table>
+        
+        <table class="table order-content">
+          <thead>
+            <tr>
+              <th style="width: 5%;">#</th>
+              <th style="width: 20%;">Déchet</th>
+              <th style="width: 20%;">Type</th>
+              <th style="width: 15%;">Poids</th>
+              <th style="width: 30%;">Extrudeuse</th>
+              <th style="width: 10%;">Etat</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for trash in trash_list %}
+            <tr class="order-item">
+              <td>{{ forloop.counter }}</td>
+              <td>{{ trash.ref }}</td>
+              <td>{{ trash.get_trash_type_display }}</td>
+              <td>{{ trash.weight }}</td>
+              <td>{{ trash.machine.designation }}</td>
+              <td>{{ trash.get_state_display }}</td>
 
+            </tr>
+            {% endfor %}
+            <h1 style="text-align: center;">
+          <strong>Déchet</strong>
+          </h1>
+          <h2 style="text-align: left;">
+          <strong>Poids Déchets </strong>: {{ trash|floatformat:1}} Kg
+          </h2>
+          
+          </tbody>
+        </table>
+        <table class="table order-content">
+          <thead>
+            <tr>
+              <th style="width: 5%;">#</th>
+              <th style="width: 25%;">Heure</th>
+              <th style="width: 15%;">Durée (Minutes)</th>
+              <th style="width: 17%;">Motif</th>
+              <th style="width: 17%;">Commentaire</th>
+              <th style="width: 21%;">Extrudeuse</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for stop in stop_list %}
+            <tr class="order-item">
+              <td>{{ forloop.counter }}</td>
+              <td>{{ stop.date }}</td>
+              <td>{{ stop.duration }}</td>
+              <td>{{ stop.get_cause_display }}</td>
+              <td>{{ stop.comment }}</td>
+              <td>{{ stop.machine.designation }}</td>
+
+            </tr>
+            {% endfor %}
+            <h1 style="text-align: center;">
+          <strong>Arrêts</strong>
+          </h1>
+          <h2 style="text-align: left;">
+          <strong>Temps D'Arrêt </strong>: {{ stop}} Minutes
+          </h2>
+          
+          </tbody>
+        </table>
+      </div>
+      <table class="signature">
+        <thead>
+          <tr>
+            <th style="text-align: right; text-decoration:underline;">Signature</th>
+          </tr>
+        </thead>
+        </table>
+      </div>
+    </div>
+    {% elif type == "Impression" %}
+      <div class="card">
+      
+      <div>
+      <h2>
+      <strong>Date </strong>: {{ start_time|date:'d-M-Y' }}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {{ start_time|date:'H:i' }} - {{ finish_time|date:'H:i' }}
+      </h2>
+        <h1 style="margin-bottom : 5px;">Opérateur &nbsp;:&nbsp;{{ user.first_name|upper }} {{ user.last_name|upper }}</h1>
+      </div>
+      <hr>
 
         <table class="table order-content">
           <thead>
@@ -293,11 +377,11 @@
           <thead>
             <tr>
               <th style="width: 3%;">#</th>
-              <th style="width: 50%;">Bobine</th>
-              <th style="width: 9%;">Poids</th>
-              <th style="width: 14%;">Micronnage</th>
-              <th style="width: 19%;">Soudeuse</th>
-              <th style="width: 10%;">Etat</th>
+              <th style="width: 65%;">Bobine</th>
+              <th style="width: 7%;">Poids</th>
+              <th style="width: 7%;">Micron.</th>
+              <th style="width: 15%;">Soudeuse</th>
+              <th style="width: 8%;">Etat</th>
             </tr>
           </thead>
           <tbody>
@@ -324,11 +408,11 @@
           <thead>
             <tr>
               <th style="width: 5%;">#</th>
-              <th style="width: 55%;">Bobine</th>
-              <th style="width: 10%;">P.C 1</th>
-              <th style="width: 10%;">P.C 2</th>
-              <th style="width: 10%;">P.C 3</th>
-              <th style="width: 10%;">P.C M</th>
+              <th style="width: 67%;">Bobine</th>
+              <th style="width: 7%;">PC1</th>
+              <th style="width: 7%;">PC2</th>
+              <th style="width: 7%;">PC3</th>
+              <th style="width: 7%;">PCM</th>
             </tr>
           </thead>
           <tbody>
@@ -350,10 +434,10 @@
           <thead>
             <tr>
               <th style="width: 5%;">#</th>
-              <th style="width: 45%;">Produit</th>
-              <th style="width: 18%;">Nombre De Colis</th>
-              <th style="width: 24%;">Soudeuse</th>
-              <th style="width: 18%;">Etat</th>
+              <th style="width: 55%;">Produit</th>
+              <th style="width: 15%;">Nombre De Colis</th>
+              <th style="width: 20%;">Soudeuse</th>
+              <th style="width: 15%;">Etat</th>
             </tr>
           </thead>
           <tbody>
@@ -381,8 +465,8 @@
           <thead>
             <tr>
               <th style="width: 5%;">#</th>
-              <th style="width: 75%;">Produit</th>
-              <th style="width: 20%;">Nombre De Colis</th>
+              <th style="width: 85%;">Produit</th>
+              <th style="width: 10%;">Nombre De Colis</th>
             </tr>
           </thead>
           <tbody>
@@ -464,37 +548,6 @@
           <h2 style="text-align: left;">
           <strong>Temps D'Arrêt </strong>: {{ stop}} Minutes
           </h2>
-          
-          </tbody>
-        </table>
-        <table class="table order-content">
-          <thead>
-            <tr>
-              <th style="width: 5%;">#</th>
-              <th style="width: 40%;">Cordon</th>
-              <th style="width: 40%;">Machine</th>
-              <th style="width: 15%;">Nombre De Rouleaux</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for h_cons in handle_consumption_list %}
-            <tr class="order-item">
-              <td>{{ forloop.counter }}</td>
-              <td>{{ h_cons.handle.designation }}</td>
-              <td>{{ h_cons.machine.designation }}</td>
-              <td>{{ h_cons.quantity }}</td>
-
-            </tr>
-            {% endfor %}
-            <h1 style="text-align: center;">
-          <strong>Consommation Cordon</strong>
-          </h1>
-          <h2 style="text-align: left;">
-          <strong>Nombre De Rouleaux </strong>: {{ handle_consumption }}
-          </h2>
-          
-          </tbody>
-        </table>
           
           </tbody>
         </table>

@@ -3714,6 +3714,8 @@ class FinishedProductCreateView(View):
                 quantity = form.quantity_produced
                 production = Production(date=timezone.now(), user=user, user2 = user2, user3 = user3, product=product, quantity_produced=quantity,
                                         machine=machine, process_type="FINISHED_PRODUCT", state="PENDING")
+                production.ideal_weight = (production.quantity_produced * production.product.weight * production.product.roll_package )/1000
+                production.value = Decimal(production.quantity_produced) * Decimal(production.product.roll_package) * Decimal(production.product.price)
                 production.save()
                 return redirect(self.success_url)
             else:
@@ -3819,18 +3821,18 @@ def recap(request):
             return redirect(request.META.get('HTTP_REFERER'))
 
         if morning == 'on':
-            if request.user.profile.job_position.name == "Mélangeur":
+            if request.user.profile.job_position.name == "Mélangeur" or request.user.profile.job_position.name == "Opérateur Façonnage" :
                 start_time = current_time.replace(hour = 7, minute = 0, second = 0, microsecond = 0)
                 finish_time = current_time.replace(hour = 18, minute = 0, second = 0, microsecond = 0)
             else:
-                start_time = current_time.replace(hour = 6, minute = 5, second = 0, microsecond = 0)
-                finish_time = current_time.replace(hour = 14, minute = 10, second = 0, microsecond = 0)
+                start_time = current_time.replace(hour = 6, minute = 0, second = 0, microsecond = 0)
+                finish_time = current_time.replace(hour = 14, minute = 0, second = 0, microsecond = 0)
         elif evening == 'on':
-            start_time = current_time.replace(hour = 14, minute = 5, second = 0, microsecond = 0)
-            finish_time = current_time.replace(hour = 22, minute = 10, second = 0, microsecond = 0)
+            start_time = current_time.replace(hour = 14, minute = 0, second = 0, microsecond = 0)
+            finish_time = current_time.replace(hour = 22, minute = 0, second = 0, microsecond = 0)
         elif night == 'on':
-            start_time = current_time.replace(hour = 22, minute = 5, second = 0, microsecond = 0)
-            finish_time = current_time.replace(hour = 6, minute = 10, second = 0, microsecond = 0)
+            start_time = current_time.replace(hour = 22, minute = 0, second = 0, microsecond = 0)
+            finish_time = current_time.replace(hour = 6, minute = 0, second = 0, microsecond = 0)
             if current_time.month == 1 or current_time.month == 3 or current_time.month == 5 or current_time.month == 7 or current_time.month == 8 or current_time.month == 10:
                 if current_time.day == 31:
                     finish_time = finish_time.replace(day = 1)
@@ -3883,18 +3885,9 @@ def recap(request):
             previous_coil_list = previous_coil_list.filter(creation_date__gte = start_time)
             previous_coil_list = previous_coil_list.filter(creation_date__lte = finish_time)
 
-            ####################### Printed Coil List #######################
-            printed_coil_list = Coil.objects.filter(printer = request.user)
-            printed_coil_list = printed_coil_list.filter(printing_date__gte = start_time)
-            printed_coil_list = printed_coil_list.filter(printing_date__lte = finish_time)
-            printed_coil_total = 0
-            for coil in printed_coil_list:
-                if coil.status != "CUT":
-                    printed_coil_total += coil.weight
-
             ####################### Trash Total #####################
     
-            trash_list = Trash.objects.filter(user = request.user, machine__machine_type__name="Extrudeuse") | Trash.objects.filter(user = request.user, machine__machine_type__name="Imprimeuse")
+            trash_list = Trash.objects.filter(user = request.user, machine__machine_type__name="Extrudeuse")
             trash_list = trash_list.filter(date__gte = start_time)
             trash_list = trash_list.filter(date__lte = finish_time)
             total_trash = 0
@@ -3902,7 +3895,7 @@ def recap(request):
                 total_trash += trash.weight
     
             ###################### Machine Stops #####################
-            stop_list = MachineStop.objects.filter(user = request.user, machine__machine_type__name="Extrudeuse") | MachineStop.objects.filter(user = request.user, machine__machine_type__name="Imprimeuse")
+            stop_list = MachineStop.objects.filter(user = request.user, machine__machine_type__name="Extrudeuse")
             stop_list = stop_list.filter(date__gte = start_time)
             stop_list = stop_list.filter(date__lte = finish_time)
             total_stop = 0
@@ -3916,8 +3909,6 @@ def recap(request):
                 "user": request.user,
                 "coil_list": coil_list,
                 "previous_coil_list": previous_coil_list,
-                "printed_coil_list": printed_coil_list,
-                "printed_coil_total": printed_coil_total,
                 "coil_total": coil_total,
                 "company": company,
                 "type": "Extrusion",
@@ -3939,6 +3930,62 @@ def recap(request):
                 return response
             return HttpResponse("Not found")
     
+        elif request.user.profile.job_position.name == "Opérateur Impression":
+            company = Company.objects.filter(name ="Ln Plast")[0]
+            
+            ####################### Printed Coil List #######################
+            printed_coil_list = Coil.objects.filter(printer = request.user)
+            printed_coil_list = printed_coil_list.filter(printing_date__gte = start_time)
+            printed_coil_list = printed_coil_list.filter(printing_date__lte = finish_time)
+            printed_coil_total = 0
+            for coil in printed_coil_list:
+                if coil.status != "CUT":
+                    printed_coil_total += coil.weight
+
+            ####################### Trash Total #####################
+    
+            trash_list = Trash.objects.filter(user = request.user, machine__machine_type__name="Imprimeuse")
+            trash_list = trash_list.filter(date__gte = start_time)
+            trash_list = trash_list.filter(date__lte = finish_time)
+            total_trash = 0
+            for trash in trash_list:
+                total_trash += trash.weight
+    
+            ###################### Machine Stops #####################
+            stop_list = MachineStop.objects.filter(user = request.user, machine__machine_type__name="Imprimeuse")
+            stop_list = stop_list.filter(date__gte = start_time)
+            stop_list = stop_list.filter(date__lte = finish_time)
+            total_stop = 0
+            for stop in stop_list:
+                total_stop += stop.duration
+    
+            template = loader.get_template('production/recap.html')
+            context = {
+                "start_time": start_time,
+                "finish_time": finish_time,
+                "user": request.user,
+                "printed_coil_list": printed_coil_list,
+                "printed_coil_total": printed_coil_total,
+                "company": company,
+                "type": "Impression",
+                "trash_list": trash_list,
+                "stop_list": stop_list,
+                "trash": total_trash,
+                "stop": total_stop,
+            }
+            html = template.render(context)
+            pdf = render_to_pdf('production/recap.html', context)
+            if pdf:
+                response = HttpResponse(pdf, content_type='application/pdf')
+                filename = "recap_ext_%s.pdf" % (timezone.now())
+                content = "inline; filename='%s'" % (filename)
+                download = request.GET.get("download")
+                if download:
+                    content = "attachment; filename='%s'" % (filename)
+                response['Content-Disposition'] = content
+                return response
+            return HttpResponse("Not found")
+            
         elif request.user.profile.job_position.name == "Opérateur Façonnage":
     
             company = Company.objects.filter(name ="Ln Plast")[0]
@@ -4121,18 +4168,18 @@ def admin_recap(request):
             return redirect(request.META.get('HTTP_REFERER'))
 
         if morning == 'on':
-            if user.profile.job_position.name == "Mélangeur":
+            if user.profile.job_position.name == "Mélangeur" or user.profile.job_position.name == "Opérateur Façonnage":
                 start_time = current_time.replace(hour = 7, minute = 0, second = 0, microsecond = 0)
                 finish_time = current_time.replace(hour = 18, minute = 0, second = 0, microsecond = 0)
             else:
-                start_time = current_time.replace(hour = 6, minute = 5, second = 0, microsecond = 0)
-                finish_time = current_time.replace(hour = 14, minute = 10, second = 0, microsecond = 0)
+                start_time = current_time.replace(hour = 6, minute = 0, second = 0, microsecond = 0)
+                finish_time = current_time.replace(hour = 14, minute = 0, second = 0, microsecond = 0)
         elif evening == 'on':
-            start_time = current_time.replace(hour = 14, minute = 5, second = 0, microsecond = 0)
-            finish_time = current_time.replace(hour = 22, minute = 10, second = 0, microsecond = 0)
+            start_time = current_time.replace(hour = 14, minute = 0, second = 0, microsecond = 0)
+            finish_time = current_time.replace(hour = 22, minute = 0, second = 0, microsecond = 0)
         elif night == 'on':
-            start_time = current_time.replace(hour = 22, minute = 5, second = 0, microsecond = 0)
-            finish_time = current_time.replace(hour = 6, minute = 10, second = 0, microsecond = 0)
+            start_time = current_time.replace(hour = 22, minute = 0, second = 0, microsecond = 0)
+            finish_time = current_time.replace(hour = 6, minute = 0, second = 0, microsecond = 0)
             if current_time.month == 1 or current_time.month == 3 or current_time.month == 5 or current_time.month == 7 or current_time.month == 8 or current_time.month == 10:
                 if current_time.day == 31:
                     finish_time = finish_time.replace(day = 1)
@@ -4185,18 +4232,9 @@ def admin_recap(request):
             previous_coil_list = previous_coil_list.filter(creation_date__gte = start_time)
             previous_coil_list = previous_coil_list.filter(creation_date__lte = finish_time)
 
-            ####################### Printed Coil List #######################
-            printed_coil_list = Coil.objects.filter(printer = user)
-            printed_coil_list = printed_coil_list.filter(printing_date__gte = start_time)
-            printed_coil_list = printed_coil_list.filter(printing_date__lte = finish_time)
-            printed_coil_total = 0
-            for coil in printed_coil_list:
-                if coil.status != "CUT":
-                    printed_coil_total += coil.weight
-
             ####################### Trash Total #####################
     
-            trash_list = Trash.objects.filter(user = user, machine__machine_type__name="Extrudeuse") | Trash.objects.filter(user = user, machine__machine_type__name="Imprimeuse")
+            trash_list = Trash.objects.filter(user = user, machine__machine_type__name="Extrudeuse")
             trash_list = trash_list.filter(date__gte = start_time)
             trash_list = trash_list.filter(date__lte = finish_time)
             total_trash = 0
@@ -4204,7 +4242,7 @@ def admin_recap(request):
                 total_trash += trash.weight
     
             ###################### Machine Stops #####################
-            stop_list = MachineStop.objects.filter(user = user, machine__machine_type__name="Extrudeuse") | MachineStop.objects.filter(user = user, machine__machine_type__name="Imprimeuse")
+            stop_list = MachineStop.objects.filter(user = user, machine__machine_type__name="Extrudeuse")
             stop_list = stop_list.filter(date__gte = start_time)
             stop_list = stop_list.filter(date__lte = finish_time)
             total_stop = 0
@@ -4218,8 +4256,6 @@ def admin_recap(request):
                 "user": user,
                 "coil_list": coil_list,
                 "previous_coil_list": previous_coil_list,
-                "printed_coil_list": printed_coil_list,
-                "printed_coil_total": printed_coil_total,
                 "coil_total": coil_total,
                 "company": company,
                 "type": "Extrusion",
@@ -4240,7 +4276,64 @@ def admin_recap(request):
                 response['Content-Disposition'] = content
                 return response
             return HttpResponse("Not found")
+
+        elif user.profile.job_position.name == "Opérateur Impression":
+        
+            company = Company.objects.filter(name ="Ln Plast")[0]
+
+            ####################### Printed Coil List #######################
+            printed_coil_list = Coil.objects.filter(printer = user)
+            printed_coil_list = printed_coil_list.filter(printing_date__gte = start_time)
+            printed_coil_list = printed_coil_list.filter(printing_date__lte = finish_time)
+            printed_coil_total = 0
+            for coil in printed_coil_list:
+                if coil.status != "CUT":
+                    printed_coil_total += coil.weight
+
+            ####################### Trash Total #####################
     
+            trash_list = Trash.objects.filter(user = user, machine__machine_type__name="Imprimeuse")
+            trash_list = trash_list.filter(date__gte = start_time)
+            trash_list = trash_list.filter(date__lte = finish_time)
+            total_trash = 0
+            for trash in trash_list:
+                total_trash += trash.weight
+    
+            ###################### Machine Stops #####################
+            stop_list = MachineStop.objects.filter(user = user, machine__machine_type__name="Imprimeuse")
+            stop_list = stop_list.filter(date__gte = start_time)
+            stop_list = stop_list.filter(date__lte = finish_time)
+            total_stop = 0
+            for stop in stop_list:
+                total_stop += stop.duration
+    
+            template = loader.get_template('production/recap.html')
+            context = {
+                "start_time": start_time,
+                "finish_time": finish_time,
+                "user": user,
+                "printed_coil_list": printed_coil_list,
+                "printed_coil_total": printed_coil_total,
+                "company": company,
+                "type": "Impression",
+                "trash_list": trash_list,
+                "stop_list": stop_list,
+                "trash": total_trash,
+                "stop": total_stop,
+            }
+            html = template.render(context)
+            pdf = render_to_pdf('production/recap.html', context)
+            if pdf:
+                response = HttpResponse(pdf, content_type='application/pdf')
+                filename = "recap_ext_%s.pdf" % (timezone.now())
+                content = "inline; filename='%s'" % (filename)
+                download = request.GET.get("download")
+                if download:
+                    content = "attachment; filename='%s'" % (filename)
+                response['Content-Disposition'] = content
+                return response
+            return HttpResponse("Not found")
+
         elif user.profile.job_position.name == "Opérateur Façonnage":
     
             company = Company.objects.filter(name ="Ln Plast")[0]
